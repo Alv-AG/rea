@@ -1,4 +1,5 @@
 name: ChatGPT REA GitHub smoke
+# policy-probe: new commit after selected-actions + full-SHA setting
 
 on:
   push:
