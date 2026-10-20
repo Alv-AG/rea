@@ -1,0 +1,16 @@
+name: ChatGPT Actions policy control
+
+on:
+  push:
+    branches:
+      - chatgpt/actions-policy-control
+
+permissions:
+  contents: read
+
+jobs:
+  official-pinned:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - run: echo "official GitHub action pinned to full SHA passed"
