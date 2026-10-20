@@ -1,5 +1,5 @@
 name: ChatGPT REA GitHub smoke
-# policy-probe: new commit after selected-actions + full-SHA setting
+# policy-probe: after correctly saving Actions permissions, expect @v4 to be rejected
 
 on:
   push:
