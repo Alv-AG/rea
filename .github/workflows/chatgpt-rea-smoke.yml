@@ -1,0 +1,42 @@
+name: ChatGPT REA GitHub smoke
+
+on:
+  push:
+    branches:
+      - chatgpt/rea-github-smoke
+
+permissions:
+  contents: read
+
+jobs:
+  binary-smoke:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npm run build:cached
+      - name: Prepare exact pwntools environment
+        shell: bash
+        run: |
+          python3 -m venv "$RUNNER_TEMP/rea-pwntools"
+          "$RUNNER_TEMP/rea-pwntools/bin/python" -m pip install --disable-pip-version-check             'pwntools==4.15.0' 'pyelftools==0.33' 'unicorn==2.1.2'
+          echo "REA_PWNTOOLS_PYTHON=$RUNNER_TEMP/rea-pwntools/bin/python" >> "$GITHUB_ENV"
+      - name: Build a tiny ELF binary
+        shell: bash
+        run: |
+          cat > "$RUNNER_TEMP/rea-smoke.c" <<'EOF'
+          #include <stdio.h>
+          __attribute__((noinline)) int add(int a, int b) { return a + b; }
+          int main(void) { printf("%d\n", add(20, 22)); return 0; }
+          EOF
+          gcc -O0 -g -fno-pie -no-pie "$RUNNER_TEMP/rea-smoke.c" -o "$RUNNER_TEMP/rea-smoke"
+          file "$RUNNER_TEMP/rea-smoke"
+          sha256sum "$RUNNER_TEMP/rea-smoke"
+      - name: Ask REA to inspect the binary without executing it
+        shell: bash
+        run: |
+          node scripts/rea.mjs inspect-binary-layout "$RUNNER_TEMP/rea-smoke" --json | tee "$RUNNER_TEMP/rea-result.json"
