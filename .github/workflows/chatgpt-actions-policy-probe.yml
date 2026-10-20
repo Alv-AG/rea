@@ -1,4 +1,5 @@
 name: ChatGPT Actions policy probe
+# policy-probe: after correctly saving selected-actions allowlist
 
 on:
   push:
