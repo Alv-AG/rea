@@ -1,0 +1,38 @@
+name: ChatGPT REA capability catalog
+
+on:
+  push:
+    branches:
+      - chatgpt/rea-capability-catalog
+
+permissions:
+  contents: read
+
+jobs:
+  catalog:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+      - run: npm ci
+      - run: npm run build:cached
+      - run: npm run mcp-catalog:generate
+      - name: Summarize generated MCP catalog
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('fs');
+          const p = '.cache/mcp-tool-catalog.json';
+          const j = JSON.parse(fs.readFileSync(p, 'utf8'));
+          const arr = Array.isArray(j) ? j : (j.tools || j.catalog || Object.values(j).find(Array.isArray) || []);
+          console.log('CATALOG_FILE', p);
+          console.log('TOP_LEVEL_KEYS', Object.keys(j));
+          console.log('TOOL_COUNT', arr.length);
+          for (const t of arr) {
+            const name = t.name || t.tool?.name || t.id || '<unknown>';
+            console.log('TOOL', name);
+          }
+          NODE
